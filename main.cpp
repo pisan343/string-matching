@@ -13,6 +13,35 @@ bool simple_match(const string &txt, const string &pat, int offset) {
   return true;
 }
 
+int brute_force_matcher(const string &txt, const string &pat) {
+  for (int offset = 0; offset <= txt.length() - pat.length(); offset++) {
+    if (simple_match(txt, pat, offset))
+      return offset;
+  }
+  return -1;
+}
+
+int simple_sum_matcher(const string &txt, const string &pat) {
+  if (pat.length() > txt.length())
+    return -1;
+  int patsum = 0;
+  int txtsum = 0;
+  for (int i = 0; i < pat.length(); i++) {
+    patsum += pat[i];
+    txtsum += txt[i];
+  }
+
+  for (int offset = 0; offset <= txt.length() - pat.length(); offset++) {
+    if (patsum == txtsum && simple_match(txt, pat, offset))
+      return offset;
+    if (offset + pat.length() + 1 < txt.length()) {
+      txtsum -= txt[offset];
+      txtsum += txt[offset + pat.length()];
+    }
+  }
+  return -1;
+}
+
 // returns index of match or -1 for no match found
 // txt is a long text that we are trying to find a pattern in
 // pat is a short text
@@ -57,20 +86,28 @@ int rabin_karp_matcher(const string &txt, const string &pat, int d = 256,
 int main() {
   string text = "abcbcab";
   string pattern = "ab";
-  int result = rabin_karp_matcher(text, pattern);
-  assert(result == 0);
+  int r1 = rabin_karp_matcher(text, pattern);
+  int r2 = simple_sum_matcher(text, pattern);
+  int r3 = brute_force_matcher(text, pattern);
+  assert(r1 == 0 && r2 == 0 && r3 == 0);
 
   pattern = "bc";
-  result = rabin_karp_matcher(text, pattern);
-  assert(result == 1);
+  r1 = rabin_karp_matcher(text, pattern);
+  r2 = simple_sum_matcher(text, pattern);
+  r3 = brute_force_matcher(text, pattern);
+  assert(r1 == 1 && r2 == 1 && r3 == 1);
 
   pattern = "cab";
-  result = rabin_karp_matcher(text, pattern);
-  assert(result == 4);
+  r1 = rabin_karp_matcher(text, pattern);
+  r2 = simple_sum_matcher(text, pattern);
+  r3 = brute_force_matcher(text, pattern);
+  assert(r1 == 4 && r2 == 4 && r3 == 4);
 
   pattern = "aa";
-  result = rabin_karp_matcher(text, pattern);
-  assert(result == -1);
+  r1 = rabin_karp_matcher(text, pattern);
+  r2 = simple_sum_matcher(text, pattern);
+  r3 = brute_force_matcher(text, pattern);
+  assert(r1 == -1 && r2 == -1 && r3 == -1);
 
   cout << "Done." << endl;
   return 0;
