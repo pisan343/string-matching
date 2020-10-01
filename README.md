@@ -6,4 +6,5 @@ Brute Force
 Simple Sum
 Rabin-Karp Algorithm
 Knuth-Morris-Pratt Algorithm
+Boyer-Moore Algorithm
 
