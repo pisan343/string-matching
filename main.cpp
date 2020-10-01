@@ -4,6 +4,16 @@
 
 using namespace std;
 
+void printArray(int arr[], int n) {
+  cout << "[";
+  if (n > 0) {
+    cout << arr[0];
+  }
+  for (int i = 1; i < n; i++) {
+    cout << "," << arr[i];
+  }
+  cout << "]";
+}
 bool simple_match(const string &txt, const string &pat, int offset) {
   for (int i = 0; i < pat.length(); ++i) {
     if (pat[i] != txt[offset + i]) {
@@ -15,15 +25,17 @@ bool simple_match(const string &txt, const string &pat, int offset) {
 
 int brute_force_matcher(const string &txt, const string &pat) {
   for (int offset = 0; offset <= txt.length() - pat.length(); offset++) {
-    if (simple_match(txt, pat, offset))
+    if (simple_match(txt, pat, offset)) {
       return offset;
+    }
   }
   return -1;
 }
 
 int simple_sum_matcher(const string &txt, const string &pat) {
-  if (pat.length() > txt.length())
+  if (pat.length() > txt.length()) {
     return -1;
+  }
   int patsum = 0;
   int txtsum = 0;
   for (int i = 0; i < pat.length(); i++) {
@@ -32,8 +44,9 @@ int simple_sum_matcher(const string &txt, const string &pat) {
   }
 
   for (int offset = 0; offset <= txt.length() - pat.length(); offset++) {
-    if (patsum == txtsum && simple_match(txt, pat, offset))
+    if (patsum == txtsum && simple_match(txt, pat, offset)) {
       return offset;
+    }
     if (offset + pat.length() + 1 < txt.length()) {
       txtsum -= txt[offset];
       txtsum += txt[offset + pat.length()];
@@ -83,31 +96,90 @@ int rabin_karp_matcher(const string &txt, const string &pat, int d = 256,
   return -1;
 }
 
+// Ignore spaces
+// AAA  CAAAA  A  C
+// 012  01233  3  4
+void computePrefixAlsoSuffix(const string &pat, int ps[]) {
+  int prefixEnd = 0;
+  ps[0] = prefixEnd;
+  for (int i = 1; i < pat.length(); i++) {
+    prefixEnd = ps[i - 1];
+    while (prefixEnd > 0 && pat[i] != pat[prefixEnd]) {
+      prefixEnd = ps[prefixEnd - 1];
+    }
+    if (pat[i] == pat[prefixEnd]) {
+      prefixEnd++;
+    }
+    ps[i] = prefixEnd;
+  }
+}
+
+int knuth_morris_pratt_matcher(const string &txt, const string &pat) {
+  int n = txt.length();
+  int m = pat.length();
+  if (m > n) {
+    return -1;
+  }
+  int *longestprefix = new int[m];
+  computePrefixAlsoSuffix(pat, longestprefix);
+
+  int txtIndex = 0;
+  int patIndex = 0;
+  while (txtIndex < n) {
+    if (pat[patIndex] == txt[txtIndex]) {
+      patIndex++;
+      txtIndex++;
+      if (patIndex == m) {
+        delete[] longestprefix;
+        return txtIndex - patIndex;
+      }
+      continue;
+    }
+
+    // mismatch
+    // Skip matching previously matched pat
+    // longestprefix[0..longestprefix[j-1]] characters,
+    if (patIndex == 0) {
+      ++txtIndex;
+    } else {
+      // keep txtIndex same
+      patIndex = longestprefix[patIndex - 1];
+    }
+  }
+
+  delete[] longestprefix;
+  return -1;
+}
+
 int main() {
   string text = "abcbcab";
   string pattern = "ab";
   int r1 = rabin_karp_matcher(text, pattern);
   int r2 = simple_sum_matcher(text, pattern);
   int r3 = brute_force_matcher(text, pattern);
-  assert(r1 == 0 && r2 == 0 && r3 == 0);
+  int r4 = knuth_morris_pratt_matcher(text, pattern);
+  assert(r1 == 0 && r2 == 0 && r3 == 0 && r4 == 0);
 
   pattern = "bc";
   r1 = rabin_karp_matcher(text, pattern);
   r2 = simple_sum_matcher(text, pattern);
   r3 = brute_force_matcher(text, pattern);
-  assert(r1 == 1 && r2 == 1 && r3 == 1);
+  r4 = knuth_morris_pratt_matcher(text, pattern);
+  assert(r1 == 1 && r2 == 1 && r3 == 1 && r4 == 1);
 
   pattern = "cab";
   r1 = rabin_karp_matcher(text, pattern);
   r2 = simple_sum_matcher(text, pattern);
   r3 = brute_force_matcher(text, pattern);
-  assert(r1 == 4 && r2 == 4 && r3 == 4);
+  r4 = knuth_morris_pratt_matcher(text, pattern);
+  assert(r1 == 4 && r2 == 4 && r3 == 4 && r4 == 4);
 
   pattern = "aa";
   r1 = rabin_karp_matcher(text, pattern);
   r2 = simple_sum_matcher(text, pattern);
   r3 = brute_force_matcher(text, pattern);
-  assert(r1 == -1 && r2 == -1 && r3 == -1);
+  r4 = knuth_morris_pratt_matcher(text, pattern);
+  assert(r1 == -1 && r2 == -1 && r3 == -1 && r4 == -1);
 
   cout << "Done." << endl;
   return 0;
